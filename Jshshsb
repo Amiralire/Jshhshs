@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Colors
+green='\e[32m'
+blue='\e[34m'
+reset='\e[0m'
+
+# UAE IP Ranges
+UAE_IP_RANGE1="178.250.248.0/21"
+UAE_IP_RANGE2="5.195.167.0/24"
+
+# Function to generate random IP from given range
+generate_random_ip() {
+    local ip_range=$1
+    local ip
+    if [[ $ip_range == "UAE_IP_RANGE1" ]]; then
+        ip1=$((178 + RANDOM % 1))
+        ip2=$((250 + RANDOM % 5))
+        ip3=$((248 + RANDOM % 8))
+        ip4=$((0 + RANDOM % 255))
+        ip="$ip1.$ip2.$ip3.$ip4"
+    elif [[ $ip_range == "UAE_IP_RANGE2" ]]; then
+        ip1=$((5 + RANDOM % 1))
+        ip2=$((195 + RANDOM % 1))
+        ip3=$((167 + RANDOM % 1))
+        ip4=$((0 + RANDOM % 255))
+        ip="$ip1.$ip2.$ip3.$ip4"
+    fi
+    echo "$ip"
+}
+
+# Function to generate a random MTU value between 1280 and 1300
+generate_random_mtu() {
+    mtu=$((1280 + RANDOM % 21)) # Random MTU between 1280 and 1300
+    echo "$mtu"
+}
+
+# Function to configure WireGuard server
+configure_wireguard() {
+    clear
+    echo -e "${blue}Configuring WireGuard Server...${reset}"
+
+    # Generate random IP from UAE IP ranges for Address, DNS Server, Endpoint, and Allowed IPs
+    SERVER_ADDRESS=$(generate_random_ip "UAE_IP_RANGE1")  # Can switch between "UAE_IP_RANGE1" and "UAE_IP_RANGE2"
+    echo -e "${green}Server Address (Random from UAE IP Range): $SERVER_ADDRESS${reset}"
+
+    DNS_SERVER=$(generate_random_ip "UAE_IP_RANGE2")  # DNS server from another range
+    echo -e "${green}DNS Server (Random from UAE IP Range): $DNS_SERVER${reset}"
+
+    # Endpoint for the server
+    ENDPOINT=$(generate_random_ip "UAE_IP_RANGE1")  # Endpoint from first range
+    echo -e "${green}Endpoint (Random from UAE IP Range): $ENDPOINT${reset}"
+
+    # Random MTU
+    MTU=$(generate_random_mtu)
+    echo -e "${green}Random MTU: $MTU${reset}"
+
+    # Allowed IPs for WireGuard
+    ALLOWED_IPS=$(generate_random_ip "UAE_IP_RANGE1")  # Allowed IP from first range
+    echo -e "${green}Allowed IPs (Random from UAE IP Range): $ALLOWED_IPS${reset}"
+
+    # Saving configuration to the WireGuard configuration file
+    WG_CONFIG_FILE="/etc/wireguard/wg0.conf"
+
+    echo -e "${blue}Saving configuration to $WG_CONFIG_FILE...${reset}"
+    echo -e "[Interface]" > $WG_CONFIG_FILE
+    echo -e "Address = $SERVER_ADDRESS" >> $WG_CONFIG_FILE
+    echo -e "DNS = $DNS_SERVER" >> $WG_CONFIG_FILE
+    echo -e "MTU = $MTU" >> $WG_CONFIG_FILE
+    # You need to manually add PrivateKey and PublicKey or implement logic to generate them
+    echo -e "PrivateKey = YOUR_PRIVATE_KEY" >> $WG_CONFIG_FILE
+    echo -e "[Peer]" >> $WG_CONFIG_FILE
+    echo -e "PublicKey = YOUR_PUBLIC_KEY" >> $WG_CONFIG_FILE
+    echo -e "Endpoint = $ENDPOINT" >> $WG_CONFIG_FILE
+    echo -e "AllowedIPs = $ALLOWED_IPS" >> $WG_CONFIG_FILE
+
+    echo -e "${green}WireGuard server configuration saved successfully!${reset}"
+    cat $WG_CONFIG_FILE
+    read -p "Press Enter to continue..."
+}
+
+# Menu system
+while true; do
+    clear
+    echo -e "${blue}===== WireGuard Server Configuration =====${reset}"
+    echo -e "${green}1. Configure WireGuard Server${reset}"
+    echo -e "${green}2. Exit${reset}"
+    read -p "Select an option: " choice
+
+    case $choice in
+        1) configure_wireguard ;;
+        2) exit ;;
+        *) echo -e "${red}Invalid option!${reset}" && sleep 2 ;;
+    esac
+done
